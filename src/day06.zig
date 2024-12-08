@@ -13,8 +13,13 @@ const Guard = struct {
 
     inline fn move(self: *@This()) ?Pos {
         const forward = self.pos.rel(self.xdir, self.ydir) orelse return null;
-        if (forward.charAt() == '#') { self.rotate(); }
-        else { self.pos = forward; }
+
+        if (forward.charAt() == '#') {
+            self.rotate();
+        } else {
+            self.pos = forward;
+        }
+
         return self.pos;
     }
 
