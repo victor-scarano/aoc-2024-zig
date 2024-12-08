@@ -1,46 +1,25 @@
 const std = @import("std");
-const Allocator = std.mem.Allocator;
-const List = std.ArrayList;
-const Map = std.AutoHashMap;
-const StrMap = std.StringHashMap;
-const BitSet = std.DynamicBitSet;
-
-const util = @import("util.zig");
-const gpa = util.gpa;
-
-const data = @embedFile("data/day05.txt");
+const rules = std.mem.splitScalar(u8, @embedFile("data/day05-1.txt"), '\n');
+const updates = @embedFile("data/day05-2.txt");
 
 pub fn main() !void {
-    
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    var map = std.AutoHashMap(u8, std.ArrayList(u8)).init(allocator);
+    while (rules.next()) |rule| {
+        const ops = std.mem.splitScalar(u8, rule, '|');
+        const before = ops.next().?;
+        const after = ops.next().?;
+        const entry = try map.getOrPutValue(before, std.ArrayList(u8).init(allocator));
+        entry.value_ptr.append(after);
+    }
+
+    var ordered = std.ArrayList(u8).init(allocator);
+    var iter = map.iterator();
+    while (iter.next()) |entry| {
+        
+    }
 }
 
-// Useful stdlib functions
-const tokenizeAny = std.mem.tokenizeAny;
-const tokenizeSeq = std.mem.tokenizeSequence;
-const tokenizeSca = std.mem.tokenizeScalar;
-const splitAny = std.mem.splitAny;
-const splitSeq = std.mem.splitSequence;
-const splitSca = std.mem.splitScalar;
-const indexOf = std.mem.indexOfScalar;
-const indexOfAny = std.mem.indexOfAny;
-const indexOfStr = std.mem.indexOfPosLinear;
-const lastIndexOf = std.mem.lastIndexOfScalar;
-const lastIndexOfAny = std.mem.lastIndexOfAny;
-const lastIndexOfStr = std.mem.lastIndexOfLinear;
-const trim = std.mem.trim;
-const sliceMin = std.mem.min;
-const sliceMax = std.mem.max;
-
-const parseInt = std.fmt.parseInt;
-const parseFloat = std.fmt.parseFloat;
-
-const print = std.debug.print;
-const assert = std.debug.assert;
-
-const sort = std.sort.block;
-const asc = std.sort.asc;
-const desc = std.sort.desc;
-
-// Generated from template/template.zig.
-// Run `zig build generate` to update.
-// Only unmodified days will be updated.
