@@ -44,3 +44,43 @@ const desc = std.sort.desc;
 // Generated from template/template.zig.
 // Run `zig build generate` to update.
 // Only unmodified days will be updated.
+
+const Ladder = struct {
+    x: std.AutoArrayHashMap(u8, std.AutoArrayHashMap(u8, void)),
+    y: std.AutoArrayHashMap(u8, std.AutoArrayHashMap(u8, void)),
+    len: usize,
+    allocator: std.mem.Allocator,
+
+    fn init(allocator: std.mem.Allocator) Ladder {
+        return Ladder {
+            .x = std.AutoArrayHashMap(u8, std.AutoArrayHashMap(u8, void)).init(allocator),
+            .y = std.AutoArrayHashMap(u8, std.AutoArrayHashMap(u8, void)).init(allocator),
+            .len = 0,
+            .allocator = allocator,
+        };
+    }
+
+    fn put(self: *Ladder, pos: Pos) !void {
+        const ymap = std.AutoArrayHashMap(u8, void).init(self.allocator);
+        const xentry = try self.x.getOrPutValue(pos.x, ymap);
+        const yput = try xentry.value_ptr.getOrPutValue(pos.y, {});
+        if (yput.found_existing) return error.@"pos has already been visited";
+
+        const xmap = std.AutoArrayHashMap(u8, void).init(self.allocator);
+        const yentry = try self.y.getOrPutValue(pos.y, xmap);
+        const xput = try yentry.value_ptr.getOrPutValue(pos.x, {});
+        if (xput.found_existing) return error.@"pos has already been visited";
+
+        self.len += 1;
+    }
+
+    fn count(self: *Ladder) usize {
+        return self.len;
+    }
+
+    fn deinit(self: *Ladder) void {
+        self.x.deinit();
+        self.y.deinit();
+    }
+};
+

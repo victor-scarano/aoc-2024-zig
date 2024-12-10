@@ -3,74 +3,127 @@ const input: []const u8 = @embedFile("data/day06.txt");
 
 const Guard = struct {
     pos: Pos,
-    xdir: i8,
-    ydir: i8,
+    dir: Dir,
 
-    inline fn init(x: u8, y: u8) @This() {
+    inline fn init(x: u8, y: u8) Guard {
         const pos = Pos.init(x, y);
-        return @This() { .pos = pos, .xdir = 0, .ydir = 1 };
+        const dir = Dir.init();
+        return Guard { .pos = pos, .dir = dir };
     }
 
-    inline fn move(self: *@This()) ?Pos {
-        const forward = self.pos.rel(self.xdir, self.ydir) orelse return null;
-
-        if (forward.charAt() == '#') {
-            self.rotate();
-        } else {
-            self.pos = forward;
-        }
-
-        return self.pos;
+    inline fn next(self: *Guard) ?Guard {
+        const forward = self.pos.offset(self.dir) orelse return null;
+        if (forward.isObstacle()) self.dir.rotate() else self.pos = forward;
+        return self.*;
     }
 
-    inline fn rotate(self: *@This()) void {
-        const xdir = self.xdir;
-        const ydir = self.ydir;
+    inline fn nextNoTurn(self: *Guard) ?Guard {
+        const forward = self.pos.offset(self.dir) orelse return null;
+        if (forward.isObstacle()) return null else self.pos = forward;
+        return self.*;
+    }
 
-        self.xdir = ydir;
-        self.ydir = -xdir;
+    inline fn nextWithObstacle(self: *Guard, obstacle: Pos) ?Guard {
+        const forward = self.pos.offset(self.dir) orelse return null;
+        if (forward.isObstacle() or forward == obstacle) self.dir.rotate() else self.pos = forward;
+        return self.*;
     }
 };
 
-const Pos = struct {
+const Pos = packed struct {
     x: u8,
     y: u8,
 
-    inline fn init(x: u8, y: u8) @This() {
-        return @This() { .x = x, .y = y };
+    inline fn init(x: u8, y: u8) Pos {
+        return Pos { .x = x, .y = y };
     }
 
-    inline fn rel(self: @This(), x: i8, y: i8) ?@This() {
-        const xo = @as(i16, self.x) + @as(i16, x);
-        const yo = @as(i16, self.y) - @as(i16, y);
+    inline fn offset(self: Pos, dir: Dir) ?Pos {
+        const xo = @as(i16, self.x) + @as(i16, dir.x);
+        const yo = @as(i16, self.y) - @as(i16, dir.y);
 
         if (xo >= 130 or yo >= 130) return null;
+        // if (xo >= 10 or yo >= 10) return null;
 
         const xc = std.math.cast(u8, xo) orelse return null;
         const yc = std.math.cast(u8, yo) orelse return null;
 
-        return @This().init(xc, yc);
+        return Pos.init(xc, yc);
     }
 
-    inline fn charAt(self: @This()) u8 {
+    inline fn isObstacle(self: Pos) bool {
         const index = (@as(usize, self.y) * 131) + @as(usize, self.x);
-        return input[index];
+        // const index = (@as(usize, self.y) * 11) + @as(usize, self.x);
+        return input[index] == '#';
+    }
+};
+
+const Dir = packed struct {
+    x: i2,
+    y: i2,
+
+    inline fn init() Dir {
+        return Dir { .x = 0, .y = 1 };
+    }
+
+    inline fn rotate(self: *Dir) void {
+        const x = self.x;
+        const y = self.y;
+
+        self.x = y;
+        self.y = -x;
     }
 };
 
 pub fn main() !void {
+    const stdout = std.io.getStdOut().writer();
+
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    var set = std.AutoHashMap(Pos, void).init(allocator);
-    defer set.deinit();
+    var visited = std.AutoHashMap(Pos, void).init(allocator);
+    defer visited.deinit();
 
+    // var guard = Guard.init(4, 6);
     var guard = Guard.init(56, 54);
-    _ = try set.getOrPut(guard.pos);
+    try visited.put(guard.pos, {});
 
-    while (guard.move()) |pos| _ = try set.getOrPut(pos);
+    while (guard.next()) |curr| try visited.put(curr.pos, {});
 
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("Part one answer: {d}\n", .{set.count()});
+    try stdout.print("Part one answer: {d}\n", .{ visited.count() });
+
+    var phantomGuard = Guard.init(56, 54);
+    _ = visited.remove(phantomGuard.pos);
+
+    while (phantomGuard.nextNoTurn()) |curr|  _ = visited.remove(curr.pos);
+
+    var obstacles: u16 = 0;
+
+    var iterator = visited.keyIterator();
+    var remaining: usize = iterator.len();
+    while (iterator.next()) |obstacle| {
+        var testVisited = std.AutoHashMap(Pos, std.AutoHashMap(Dir, void)).init(allocator);
+        defer testVisited.deinit();
+
+        var testGuard = Guard.init(56, 54);
+        const entry = try testVisited.getOrPutValue(testGuard.pos, std.AutoHashMap(Dir, void).init(allocator));
+        try entry.value_ptr.put(testGuard.dir, {});
+
+        var foundExisting: u16 = 0;
+        while (testGuard.nextWithObstacle(obstacle.*)) |curr| {
+            const entry1 = try testVisited.getOrPutValue(curr.pos, std.AutoHashMap(Dir, void).init(allocator));
+            const result = try entry1.value_ptr.getOrPut(curr.dir);
+            if (result.found_existing) foundExisting += 1;
+            if (foundExisting > 2) {
+                obstacles += 1;
+                try stdout.print("found a looping obstacle\n", .{});
+                break;
+            }
+        }
+        remaining -= 1;
+        try stdout.print("finished simulating an obstacle, {} remaining\n", .{ remaining });
+    }
+
+    try stdout.print("Part two answer: {d}\n", .{ obstacles });
 }
 
