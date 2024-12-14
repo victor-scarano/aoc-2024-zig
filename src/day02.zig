@@ -1,12 +1,12 @@
 const std = @import("std");
-const data = @embedFile("data/day02.txt");
+const input = @embedFile("inputs/day02.txt");
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
 
     var part1: u16 = 0;
 
-    var reports = std.mem.splitScalar(u8, data, '\n');
+    var reports = std.mem.splitScalar(u8, input, '\n');
     while (reports.next()) |unparsed| {
         if (report_foo(unparsed)) |report| {
             _ = report;

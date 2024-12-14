@@ -1,6 +1,6 @@
 const std = @import("std");
-const rules = std.mem.splitScalar(u8, @embedFile("data/day05-1.txt"), '\n');
-const updates = @embedFile("data/day05-2.txt");
+const rules = std.mem.splitScalar(u8, @embedFile("inputs/day05-1.txt"), '\n');
+const updates = @embedFile("inputs/day05-2.txt");
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);

@@ -1,6 +1,5 @@
 const std = @import("std");
-
-const data = @embedFile("data/day01.txt");
+const input = @embedFile("inputs/day01.txt");
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
@@ -11,7 +10,7 @@ pub fn main() !void {
     var left_list = std.ArrayList(u32).init(allocator);
     var right_list = std.ArrayList(u32).init(allocator);
 
-    var lines = std.mem.tokenizeScalar(u8, data, '\n');
+    var lines = std.mem.tokenizeScalar(u8, input, '\n');
     while (lines.next()) |line| {
         var entries = std.mem.tokenizeScalar(u8, line, ' ');
         try left_list.append(try std.fmt.parseInt(u32, entries.next().?, 10));

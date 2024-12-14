@@ -1,5 +1,5 @@
 const std = @import("std");
-const input: []const u8 = @embedFile("data/day06.txt");
+const input: []const u8 = @embedFile("inputs/day06.txt");
 
 const Guard = struct {
     pos: Pos,

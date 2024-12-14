@@ -1,5 +1,5 @@
 const std = @import("std");
-const input: []const u8 = @embedFile("data/day04.txt");
+const input: []const u8 = @embedFile("inputs/day04.txt");
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();

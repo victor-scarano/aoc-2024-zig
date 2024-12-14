@@ -1,5 +1,5 @@
 const std = @import("std");
-const data = @embedFile("data/day03.txt");
+const input = @embedFile("inputs/day03.txt");
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
@@ -9,7 +9,7 @@ pub fn main() !void {
 
 fn part1() u32 {
     var sum: u32 = 0;
-    var muls = std.mem.splitSequence(u8, data, "mul(");
+    var muls = std.mem.splitSequence(u8, input, "mul(");
     while (muls.next()) |mul| {
         var end = std.mem.splitScalar(u8, mul, ')');
         var inside = std.mem.splitScalar(u8, end.first(), ',');
@@ -23,7 +23,7 @@ fn part1() u32 {
 
 fn part2() u32 {
     var sum: u32 = 0;
-    var dos = std.mem.splitSequence(u8, data, "do()");
+    var dos = std.mem.splitSequence(u8, input, "do()");
     while (dos.next()) |until_next_do| {
         var donts = std.mem.splitSequence(u8, until_next_do, "don't()");
         const until_next_dont = donts.first();
